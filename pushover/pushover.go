@@ -1,10 +1,10 @@
 package pushover
 
 import (
-	"encodings/json"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
+        "strings"
 	"time"
 )
 
@@ -14,7 +14,7 @@ func authenticate(token string, user string) Identity {
 
 func member_too_long(mtype string, mlength int, maxlen int) {
 	log.Printf("[!] warning: %s length of %d chars exceeds maximum allowed "+
-		"%s length\n    of %d chars.\n", mtype, length, mtype, maxlen)
+		"%s length\n    of %d chars.\n", mtype, mlength, mtype, maxlen)
 }
 
 // returns a boolean indicating whether the message was valid. if the
@@ -22,21 +22,21 @@ func member_too_long(mtype string, mlength int, maxlen int) {
 // truncated.
 func validate_message(message Message) (Message, bool) {
 	valid := true
-	message_len := length(message.text) + length(message.title)
+	message_len := len(message.text) + len(message.title)
 	if message_len > message_max {
 		member_too_long("message", message_len, message_max)
-		message = message[:message_max-length(message.title)]
+		message.text = message.text[:message_max-len(message.title)]
 		valid = false
 	}
 
-	if length(message.url) > url_max {
-		member_too_long("URL", length(message.url), url_max)
+	if len(message.url) > url_max {
+		member_too_long("URL", len(message.url), url_max)
 		valid = false
 	}
 
-	if length(message.url_title) > url_max {
-		member_too_long("URL title", length(message.url_title),
-			max_url_title)
+	if len(message.url_title) > url_title_max {
+		member_too_long("URL title", len(message.url_title),
+			url_title_max)
 		valid = false
 	}
 
@@ -45,7 +45,7 @@ func validate_message(message Message) (Message, bool) {
 
 func basic_message(message string, identity Identity) (Message, bool) {
 	msg := Message{identity.token, identity.user, message, "", "", "", "",
-		0, time.Now().UTC().Unix()}
+		0, int(time.Now().UTC().Unix())}
 	var valid bool
 
 	msg, valid = validate_message(msg)
@@ -54,19 +54,20 @@ func basic_message(message string, identity Identity) (Message, bool) {
 
 func notify(message Message, identity Identity) bool {
 	log.Println("[+] encoding message to JSON")
-	json_message, json_err := json.Marshall(message)
-	if json_err {
+	json_message, json_err := json.Marshal(message)
+	if json_err != nil {
 		log.Println("[!] error encoding to JSON.")
-		return json_err
+		return false
 	}
 
-	log.Printf("[-] body: '%s'\n", json_message)
+        message_body := strings.NewReader(string(json_message))
+	log.Printf("[-] body: '%s'\n", message_body)
 
 	log.Println("[+] sending message...")
-	resp, err := http.Post(api_url, "application/json", json_message)
+	resp, err := http.Post(api_url, "application/json", message_body)
 	if err != nil {
 		log.Printf("[!] POST request failed with error %s.\n", err)
-		return err
+		return false
 	} else {
 		defer resp.Body.Close()
 	}
@@ -76,4 +77,5 @@ func notify(message Message, identity Identity) bool {
 		log.Printf("[!] server returned %s.\n", resp.Status)
 		return false
 	}
+        return true
 }
