@@ -1,6 +1,8 @@
 ## gopush
 ### a Go client library for Pushover notifications
 
+This is my first real Go program, so *caveat emptor*.
+
 `gopush` provides an interface to [Superblock's](https://superblock.net)
 [Pushover](https://pushover.net).
 
