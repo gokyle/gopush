@@ -1,20 +1,36 @@
 package pushover
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
-	"time"
+	"net/url"
+	//"time"
 )
+
+func loginfo(message string) {
+	if Verbose {
+		message = "[+] pushover " + message
+		log.Println(message)
+	}
+}
+
+func logerr(message string) {
+	if Verbose {
+		message = "[!] pushover " + message
+		log.Println(message)
+	}
+}
 
 func Authenticate(token string, user string) Identity {
 	return Identity{token, user}
 }
 
 func member_too_long(mtype string, mlength int, maxlen int) {
-	log.Printf("[!] warning: %s length of %d chars exceeds maximum allowed "+
-		"%s length\n    of %d chars.\n", mtype, mlength, mtype, maxlen)
+	if Verbose {
+		log.Printf("[!] pushover warning: %s length of %d chars exceeds "+
+			"maximum allowed %s length\n    of %d chars.\n",
+			mtype, mlength, mtype, maxlen)
+	}
 }
 
 // returns a boolean indicating whether the message was valid. if the
@@ -22,20 +38,36 @@ func member_too_long(mtype string, mlength int, maxlen int) {
 // truncated.
 func Validate_message(message Message) (Message, bool) {
 	valid := true
-	message_len := len(message.Text) + len(message.Title)
+
+	if len(message.token) == 0 {
+		logerr("missing authentication token.")
+		valid = false
+	}
+
+	if len(message.user) == 0 {
+		logerr("missing user key.")
+		valid = false
+	}
+
+	if len(message.text) == 0 {
+		logerr("missing message.")
+		valid = false
+	}
+
+	message_len := len(message.text) + len(message.title)
 	if message_len > message_max {
 		member_too_long("message", message_len, message_max)
-		message.Text = message.Text[:message_max-len(message.Title)]
+		message.text = message.text[:message_max-len(message.title)]
 		valid = false
 	}
 
-	if len(message.Url) > url_max {
-		member_too_long("URL", len(message.Url), url_max)
+	if len(message.url) > url_max {
+		member_too_long("URL", len(message.url), url_max)
 		valid = false
 	}
 
-	if len(message.Url_title) > url_title_max {
-		member_too_long("URL title", len(message.Url_title),
+	if len(message.url_title) > url_title_max {
+		member_too_long("URL title", len(message.url_title),
 			url_title_max)
 		valid = false
 	}
@@ -43,48 +75,107 @@ func Validate_message(message Message) (Message, bool) {
 	return message, valid
 }
 
-func Basic_message(message string, identity Identity) (Message, bool) {
+func get_body(message Message) (url.Values, bool) {
+	body := url.Values{}
+	valid := true
+
+	body.Add("token", message.token)
+	body.Add("user", message.user)
+	body.Add("message", message.text)
+
+	if len(message.device) > 0 {
+		body.Add("device", message.device)
+	}
+
+	if len(message.title) > 0 {
+		body.Add("title", message.title)
+	}
+
+	if len(message.url) > 0 {
+		body.Add("url", message.url)
+	}
+
+	if len(message.url_title) > 0 {
+		body.Add("url_title", message.url_title)
+	}
+
+	if len(message.priority) > 0 {
+		body.Add("priority", message.priority)
+	}
+
+	if len(message.timestamp) > 0 {
+		body.Add("timestamp", message.timestamp)
+	}
+
+	return body, valid
+}
+
+func make_message(message string, identity Identity) (Message, bool) {
 	msg := Message{identity.Token, identity.User, message, "", "", "", "",
-		0, int(time.Now().UTC().Unix())}
+		"0", ""}
 	var valid bool
 
 	msg, valid = Validate_message(msg)
 	return msg, valid
 }
 
+func make_titled_message(message string, title string, identity Identity) (Message, bool) {
+	msg := Message{identity.Token, identity.User, message, title, "", "", "",
+		"0", ""}
+	var valid bool
+
+	msg, valid = Validate_message(msg)
+	return msg, valid
+
+}
+
 func Notify(identity Identity, message string) bool {
-	msg, err := Basic_message(message, identity)
+	msg, err := make_message(message, identity)
 	if !err {
 		log.Println("[!] error creating message.")
 		return false
 	}
 
-	return Notify_message(msg)
+	return notify(msg)
 }
 
-func Notify_message(message Message) bool {
-	log.Println("[+] encoding message to JSON")
-	json_message, json_err := json.Marshal(message)
-	if json_err != nil {
-		log.Println("[!] error encoding to JSON.")
-		return false
+func Notify_titled(identity Identity, message string, title string) bool {
+	msg := Message{identity.Token, identity.User, message, "", title, "", "",
+		"0", ""}
+	return notify(msg)
+}
+
+func Notify_device(identity Identity, message string, device string) bool {
+	msg := Message{identity.Token, identity.User, message, device, "", "", "",
+		"0", ""}
+	return notify(msg)
+}
+
+func notify(message Message) bool {
+	_, valid := Validate_message(message)
+	if !valid {
+		logerr("invalid message")
 	}
 
-	message_body := strings.NewReader(string(json_message))
-	log.Printf("[-] body: '%s'\n", message_body)
+	body, valid := get_body(message)
+	if !valid {
+		logerr("invalid message.")
+		return valid
+	}
 
-	log.Println("[+] sending message...")
-	resp, err := http.Post(api_url, "application/json", message_body)
+	log.Println(body)
+	loginfo("sending message...")
+	resp, err := http.PostForm(api_url, body)
 	if err != nil {
-		log.Printf("[!] POST request failed with error %s.\n", err)
+		logerr("POST request failed.")
 		return false
 	} else {
 		defer resp.Body.Close()
 	}
 
-	log.Println("[+] POST request success.")
+	loginfo("POST request success.")
 	if resp.StatusCode != 200 {
-		log.Printf("[!] server returned %s.\n", resp.Status)
+		logerr("server returned " + resp.Status + ".")
 		return false
 	}
 	return true
