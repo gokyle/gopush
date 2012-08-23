@@ -1,6 +1,7 @@
 package pushover
 
 import (
+	"encodings/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,7 +20,7 @@ func member_too_long(mtype string, mlength int, maxlen int) {
 // returns a boolean indicating whether the message was valid. if the
 // message was invalid, the offending struct member(s) was/were
 // truncated.
-func validate_message(message Message) bool {
+func validate_message(message Message) (Message, bool) {
 	valid := true
 	message_len := length(message.text) + length(message.title)
 	if message_len > message_max {
@@ -39,17 +40,40 @@ func validate_message(message Message) bool {
 		valid = false
 	}
 
-	return valid
+	return message, valid
 }
 
-func basic_message(message string) Message {
-	if length(message) > message_max {
-	}
-	return Message{message, "", "", "", "", 0,
-		time.Now().UTC().Unix(),
-	}
+func basic_message(message string, identity Identity) (Message, bool) {
+	msg := Message{identity.token, identity.user, message, "", "", "", "",
+		0, time.Now().UTC().Unix()}
+	var valid bool
+
+	msg, valid = validate_message(msg)
+	return msg, valid
 }
 
-func send_basic(message Message, identity Identity) int {
+func notify(message Message, identity Identity) bool {
+	log.Println("[+] encoding message to JSON")
+	json_message, json_err := json.Marshall(message)
+	if json_err {
+		log.Println("[!] error encoding to JSON.")
+		return json_err
+	}
 
+	log.Printf("[-] body: '%s'\n", json_message)
+
+	log.Println("[+] sending message...")
+	resp, err := http.Post(api_url, "application/json", json_message)
+	if err != nil {
+		log.Printf("[!] POST request failed with error %s.\n", err)
+		return err
+	} else {
+		defer resp.Body.Close()
+	}
+
+	log.Println("[+] POST request success.")
+	if resp.StatusCode != 200 {
+		log.Printf("[!] server returned %s.\n", resp.Status)
+		return false
+	}
 }
