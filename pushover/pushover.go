@@ -21,10 +21,6 @@ func logerr(message string) {
 	}
 }
 
-func Authenticate(token string, user string) Identity {
-	return Identity{token, user}
-}
-
 func member_too_long(mtype string, mlength int, maxlen int) {
 	if Verbose {
 		log.Printf("[!] pushover warning: %s length of %d chars exceeds "+
@@ -36,7 +32,7 @@ func member_too_long(mtype string, mlength int, maxlen int) {
 // returns a boolean indicating whether the message was valid. if the
 // message was invalid, the offending struct member(s) was/were
 // truncated.
-func Validate_message(message Message) (Message, bool) {
+func validate_message(message Message) (Message, bool) {
 	valid := true
 
 	if len(message.token) == 0 {
@@ -110,31 +106,8 @@ func get_body(message Message) (url.Values, bool) {
 	return body, valid
 }
 
-func Notify(identity Identity, message string) bool {
-	msg := Message{identity.Token, identity.User, message, "", "", "", "",
-		"0", ""}
-	if !err {
-		log.Println("[!] error creating message.")
-		return false
-	}
-
-	return notify(msg)
-}
-
-func Notify_titled(identity Identity, message string, title string) bool {
-	msg := Message{identity.Token, identity.User, message, "", title, "", "",
-		"0", ""}
-	return notify(msg)
-}
-
-func Notify_device(identity Identity, message string, device string) bool {
-	msg := Message{identity.Token, identity.User, message, device, "", "", "",
-		"0", ""}
-	return notify(msg)
-}
-
 func notify(message Message) bool {
-	_, valid := Validate_message(message)
+	_, valid := validate_message(message)
 	if !valid {
 		logerr("invalid message")
 	}
@@ -160,4 +133,31 @@ func notify(message Message) bool {
 		return false
 	}
 	return true
+}
+
+func Authenticate(token string, user string) Identity {
+	return Identity{token, user}
+}
+
+func Notify(identity Identity, message string) bool {
+	msg := Message{identity.Token, identity.User, message, "", "", "", "",
+		"0", ""}
+	if !err {
+		log.Println("[!] error creating message.")
+		return false
+	}
+
+	return notify(msg)
+}
+
+func Notify_titled(identity Identity, message string, title string) bool {
+	msg := Message{identity.Token, identity.User, message, "", title, "", "",
+		"0", ""}
+	return notify(msg)
+}
+
+func Notify_device(identity Identity, message string, device string) bool {
+	msg := Message{identity.Token, identity.User, message, device, "", "", "",
+		"0", ""}
+	return notify(msg)
 }
