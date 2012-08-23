@@ -10,7 +10,7 @@ Example usage:
     
     import (
     	"fmt"
-    	"gopush/pushover"
+    	"bitbucket.org/kisom/gopush/pushover"
     	"os"
     	"path/filepath"
     )
