@@ -163,7 +163,6 @@ func notify(message Message) bool {
 		return valid
 	}
 
-	log.Println(body)
 	loginfo("sending message...")
 	resp, err := http.PostForm(api_url, body)
 	if err != nil {
