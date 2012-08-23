@@ -6,18 +6,18 @@ const url_title_max = 50
 const api_url = "https://api.pushover.net/1/messages.json"
 
 type Identity struct {
-	token string
-	user  string
+	Token string
+	User  string
 }
 
 type Message struct {
-	token     string
-	user      string
-	text      string
-	device    string
-	title     string
-	url       string
-	url_title string
-	priority  int
-	timestamp int
+	Token     string
+	User      string
+	Text      string
+	Device    string
+	Title     string
+	Url       string
+	Url_title string
+	Priority  int
+	Timestamp int
 }

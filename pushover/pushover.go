@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func authenticate(token string, user string) Identity {
+func Authenticate(token string, user string) Identity {
 	return Identity{token, user}
 }
 
@@ -20,22 +20,22 @@ func member_too_long(mtype string, mlength int, maxlen int) {
 // returns a boolean indicating whether the message was valid. if the
 // message was invalid, the offending struct member(s) was/were
 // truncated.
-func validate_message(message Message) (Message, bool) {
+func Validate_message(message Message) (Message, bool) {
 	valid := true
-	message_len := len(message.text) + len(message.title)
+	message_len := len(message.Text) + len(message.Title)
 	if message_len > message_max {
 		member_too_long("message", message_len, message_max)
-		message.text = message.text[:message_max-len(message.title)]
+		message.Text = message.Text[:message_max-len(message.Title)]
 		valid = false
 	}
 
-	if len(message.url) > url_max {
-		member_too_long("URL", len(message.url), url_max)
+	if len(message.Url) > url_max {
+		member_too_long("URL", len(message.Url), url_max)
 		valid = false
 	}
 
-	if len(message.url_title) > url_title_max {
-		member_too_long("URL title", len(message.url_title),
+	if len(message.Url_title) > url_title_max {
+		member_too_long("URL title", len(message.Url_title),
 			url_title_max)
 		valid = false
 	}
@@ -43,16 +43,16 @@ func validate_message(message Message) (Message, bool) {
 	return message, valid
 }
 
-func basic_message(message string, identity Identity) (Message, bool) {
-	msg := Message{identity.token, identity.user, message, "", "", "", "",
+func Basic_message(message string, identity Identity) (Message, bool) {
+	msg := Message{identity.Token, identity.User, message, "", "", "", "",
 		0, int(time.Now().UTC().Unix())}
 	var valid bool
 
-	msg, valid = validate_message(msg)
+	msg, valid = Validate_message(msg)
 	return msg, valid
 }
 
-func notify(message Message, identity Identity) bool {
+func Notify(message Message) bool {
 	log.Println("[+] encoding message to JSON")
 	json_message, json_err := json.Marshal(message)
 	if json_err != nil {
