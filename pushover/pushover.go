@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-        "strings"
+	"strings"
 	"time"
 )
 
@@ -52,7 +52,17 @@ func Basic_message(message string, identity Identity) (Message, bool) {
 	return msg, valid
 }
 
-func Notify(message Message) bool {
+func Notify(identity Identity, message string) bool {
+	msg, err := Basic_message(message, identity)
+	if !err {
+		log.Println("[!] error creating message.")
+		return false
+	}
+
+	return Notify_message(msg)
+}
+
+func Notify_message(message Message) bool {
 	log.Println("[+] encoding message to JSON")
 	json_message, json_err := json.Marshal(message)
 	if json_err != nil {
@@ -60,7 +70,7 @@ func Notify(message Message) bool {
 		return false
 	}
 
-        message_body := strings.NewReader(string(json_message))
+	message_body := strings.NewReader(string(json_message))
 	log.Printf("[-] body: '%s'\n", message_body)
 
 	log.Println("[+] sending message...")
@@ -77,5 +87,5 @@ func Notify(message Message) bool {
 		log.Printf("[!] server returned %s.\n", resp.Status)
 		return false
 	}
-        return true
+	return true
 }
