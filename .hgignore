@@ -1,3 +1,4 @@
 api.key
 syntax: glob
 .*.*
+test_client
