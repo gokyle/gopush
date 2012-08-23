@@ -4,6 +4,8 @@
 `gopush` provides an interface to [Superblock's](https://superblock.net)
 [Pushover](https://pushover.net).
 
+To use it, use the import `"bitbucket.org/kisom/gopush/pushover"`.
+
 Example usage:
 
     package main
