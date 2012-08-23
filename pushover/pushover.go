@@ -110,27 +110,9 @@ func get_body(message Message) (url.Values, bool) {
 	return body, valid
 }
 
-func make_message(message string, identity Identity) (Message, bool) {
+func Notify(identity Identity, message string) bool {
 	msg := Message{identity.Token, identity.User, message, "", "", "", "",
 		"0", ""}
-	var valid bool
-
-	msg, valid = Validate_message(msg)
-	return msg, valid
-}
-
-func make_titled_message(message string, title string, identity Identity) (Message, bool) {
-	msg := Message{identity.Token, identity.User, message, title, "", "", "",
-		"0", ""}
-	var valid bool
-
-	msg, valid = Validate_message(msg)
-	return msg, valid
-
-}
-
-func Notify(identity Identity, message string) bool {
-	msg, err := make_message(message, identity)
 	if !err {
 		log.Println("[!] error creating message.")
 		return false
