@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <title>gopush by kisom</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>gopush</h1>
+        <h2>Pushover notifications in Go</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/kisom/gopush_git/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/kisom/gopush_git/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/kisom/gopush_git" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h2>gopush</h2>
+
+<h3>a Go client library for Pushover notifications</h3>
+
+<p><strong>Note:</strong> this is the Git repository to allow Heroku users to employ <code>gopush</code> in their webapps, as it appears the Go buildpack doesn't support mercurial at this time. The main repository is a Mercurial repository at <a href="https://bitbucket.org/kisom/gopush/">Bitbucket</a>; all development happens there and is pushed here.</p>
+
+<p>This is my first real Go program, so <em>caveat emptor</em>.</p>
+
+<p><code>gopush</code> provides an interface to <a href="https://superblock.net">Superblock's</a>
+<a href="https://pushover.net">Pushover</a>.</p>
+
+<p>To use it, use the import <code>"bitbucket.org/kisom/gopush/pushover"</code>.</p>
+
+<p>Example usage:</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "bitbucket.org/kisom/gopush/pushover"
+    "os"
+    "path/filepath"
+)
+
+func main() {
+    if len(os.Args) &lt; 3 {
+        fmt.Printf("usage: %s api_key user_key\n", filepath.Base(os.Args[0]))
+        os.Exit(1)
+    }
+
+    identity := pushover.Authenticate(
+        os.Args[1],
+        os.Args[2],
+    )
+
+    sent := pushover.Notify(identity,"testing gopush")
+    if !sent {
+        fmt.Println("[!] notification failed.")
+        os.Exit(1)
+    }
+}
+</code></pre>
+
+<h2>Notification functions:</h2>
+
+<h3>Authenticate</h3>
+
+<p><code>Authenticate</code> returns an Identity struct. To create one, call the Authentication
+function with the API token and user key:</p>
+
+<pre><code>identity := pushover.Authenticate(token, user_key)
+</code></pre>
+
+<h3>Notify</h3>
+
+<p><code>Notify</code> is the most basic notification function. Its signature is:</p>
+
+<pre><code>Notify(Identity, string) bool
+</code></pre>
+
+<p><code>Notify</code> returns <code>true</code> if the message was sent successfully, and <code>false</code>
+otherwise.</p>
+
+<h3>Notify_titled</h3>
+
+<p><code>Notify_titled</code> is used to send a notification with a custom title. Its 
+signature is:</p>
+
+<pre><code>Notify_titled(Identity, string, string) bool
+</code></pre>
+
+<p>The first string is the message, the second string is the title. It returns the
+same as <code>Notify</code>.</p>
+
+<h3>Notify_device</h3>
+
+<p><code>Notify_device</code> is used to send a notification to a specific device. Its 
+signature is:</p>
+
+<pre><code>Notify_titled(Identity, string, string) bool
+</code></pre>
+
+<p>The first string is the message, the second string is the device name. It returns
+the same as <code>Notify</code>.</p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
