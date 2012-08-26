@@ -142,11 +142,6 @@ func Authenticate(token string, user string) Identity {
 func Notify(identity Identity, message string) bool {
 	msg := Message{identity.Token, identity.User, message, "", "", "", "",
 		"0", ""}
-	if !err {
-		log.Println("[!] error creating message.")
-		return false
-	}
-
 	return notify(msg)
 }
 
